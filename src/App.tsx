@@ -11,6 +11,7 @@ import { ProjectsView } from '@/components/ProjectsView';
 import { TemplatesView } from '@/components/TemplatesView';
 import { DocumentsView } from '@/components/DocumentsView';
 import { useAppStore } from '@/store';
+import { mcpClaudeClient } from '@/services/mcpClaudeClient';
 import type { User } from '@/types';
 import './index.css';
 
@@ -81,6 +82,17 @@ export function App(): React.ReactElement {
     useAppStore();
 
   useEffect(() => {
+    // Check for OAuth session from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session');
+    
+    if (sessionId) {
+      // Set the auth session in MCP client
+      mcpClaudeClient.setAuthSession(sessionId);
+      // Remove session from URL to keep it clean
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Initialize user and project data on first load
     setUser(getDefaultUser());
     setCurrentProject(getDefaultProject());

@@ -1,5 +1,11 @@
-import { query, type SDKMessage } from '@anthropic-ai/claude-code';
+// Claude Code SDK is not available in browser environment
+// This is a stub implementation for browser compatibility
 import type { GenerationRequest, TechStack } from '@/types';
+
+export interface SDKMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 export interface ClaudeCodeOptions {
   maxTurns?: number;
@@ -65,14 +71,17 @@ export class ClaudeCodeService {
         }),
       };
 
-      // Execute query using Claude Code SDK
-      for await (const message of query(queryOptions)) {
-        messages.push(message);
-      }
+      // Claude Code SDK is not available in browser environment
+      // Return a stub response
+      messages.push({
+        role: 'assistant',
+        content: 'Claude Code SDK is not available in browser environment. This feature requires a Node.js runtime.'
+      });
 
       return {
         messages,
-        success: true,
+        success: false,
+        error: 'Claude Code SDK requires Node.js runtime and is not available in browser',
       };
     } catch (error) {
       const errorMessage =

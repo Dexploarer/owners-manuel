@@ -17,6 +17,7 @@ import {
 import { useAppStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { AuthStatus } from '@/components/AuthStatus';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -126,6 +127,7 @@ export const MainLayout: React.FC<LayoutProps> = ({ children }) => {
               Feedback
             </Button>
             <Button size='sm'>Upgrade</Button>
+            <AuthStatus />
           </div>
         </header>
 

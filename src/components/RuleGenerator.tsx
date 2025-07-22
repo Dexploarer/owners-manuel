@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAppStore } from '@/store';
-import { claudeCodeService } from '@/services/claudeCodeService';
+import { mcpClaudeClient } from '@/services/mcpClaudeClient';
 import type { GenerationRequest, ClaudeRuleTemplate } from '@/types';
 
 interface RuleGeneratorProps {
@@ -131,25 +131,42 @@ export const RuleGenerator: React.FC<RuleGeneratorProps> = ({
         },
       };
 
-      const results = await claudeCodeService.generateRules(
-        selectedTemplates,
-        request
-      );
+      // Ensure MCP client is initialized
+      if (!mcpClaudeClient.isConnected()) {
+        await mcpClaudeClient.initialize();
+      }
+
       const generatedContent: Record<string, string> = {};
 
-      for (const [templateId, result] of Object.entries(results)) {
-        if (result.success && result.messages.length > 0) {
-          // Extract text content from the last message
-          const lastMessage = result.messages[result.messages.length - 1];
-          if (lastMessage && 'content' in lastMessage) {
-            generatedContent[templateId] = String(lastMessage.content);
+      // Generate each template sequentially
+      for (const templateId of selectedTemplates) {
+        try {
+          let content = '';
+          
+          if (templateId === 'claude-md-comprehensive' || templateId === 'agents-md-react') {
+            content = await mcpClaudeClient.createAgentsMd({
+              projectName,
+              projectDescription,
+              techStack: projectTechStack,
+              customInstructions
+            });
+          } else if (templateId === 'cursorrules-typescript') {
+            content = await mcpClaudeClient.createCursorRules({
+              projectName,
+              projectDescription,
+              techStack: projectTechStack,
+              customInstructions
+            });
           } else {
-            generatedContent[templateId] =
-              'Generation completed but no content returned';
+            // For other templates, use the general document generation
+            const result = await mcpClaudeClient.generateDocuments(request);
+            content = result.documents[0]?.content || 'No content generated';
           }
-        } else {
-          generatedContent[templateId] =
-            `Error: ${result.error || 'Generation failed'}`;
+          
+          generatedContent[templateId] = content;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          generatedContent[templateId] = `Error: ${errorMessage}`;
         }
       }
 
